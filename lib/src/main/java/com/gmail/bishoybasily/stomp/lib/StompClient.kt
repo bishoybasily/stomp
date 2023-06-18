@@ -63,6 +63,7 @@ class StompClient(private val okHttpClient: OkHttpClient,
                     topics[topic] = topicId
 
                     logger.log(Level.INFO, "Subscribed to: $topic id: $topicId")
+		logger.log(Level.INFO, "initStomp to: $topic content: $emitters[topic] or $it")
 
                 }
                 .doOnDispose {
@@ -205,6 +206,7 @@ class StompClient(private val okHttpClient: OkHttpClient,
             }
             Commands.MESSAGE -> {
                 val dest = message.headers[Headers.DESTINATION]
+	logger.log(Level.INFO, "initStomp subscribe headers : ${message.command}")
                 if (dest != null) {
                     val emitter = emitters[dest]
                     if (emitter != null) {
@@ -213,7 +215,7 @@ class StompClient(private val okHttpClient: OkHttpClient,
                 }
             }
         }
-        logger.log(Level.INFO, "onMessage payload: ${message.payload}, heaaders:${message.headers}, command: ${message.command}")
+        logger.log(Level.INFO, "onMessage payload: ${message.payload}, headers:${message.headers}, command: ${message.command}")
     }
 
 

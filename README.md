@@ -1,6 +1,4 @@
-# Stomp client for kotlin
-
-[![](https://jitpack.io/v/bishoybasily/stomp.svg)](https://jitpack.io/#bishoybasily/stomp)
+# Stomp client via WebSocket for Kotlin/Android with auto reconnect
 
 ## Example 
 
@@ -10,19 +8,22 @@ lateinit var stompConnection: Disposable
 lateinit var topic: Disposable
 
 val url = "ws://example.com/endpoint"
-val intervalMillis = 1000L
+val reconnectIntervalMillis = 5000L //auto reconnect after 5 secounds
 val client = OkHttpClient()
+val customConnectionHeaders = HashMap<String, String>() //you can pass some headers like token to connection
 
-val stomp = StompClient(url, intervalMillis, client)
+val stomp = StompClient(url, client, reconnectIntervalMillis)
 
 // connect
-stompConnection = stomp.connect().subscribe {
+// pass null if you don't need any header
+stompConnection = stomp.connect(customConnectionHeaders).subscribe {
     when (it.type) {
         Event.Type.OPENED -> {
-
+            //if you want to auto subscribe to topic, just call subscribe here like:
+            //topic = stomp.subscribe("/destination").subscribe { Log.i(TAG, it) }
         }
         Event.Type.CLOSED -> {
-
+            //No need to try reconnect
         }
         Event.Type.ERROR -> {
 
@@ -31,7 +32,7 @@ stompConnection = stomp.connect().subscribe {
 }
 
 // subscribe
-topic = stomp.subscribe("/destination").subscribe { Log.i(TAG, it) }
+topic = stomp.subscribe("/destination").subscribe { message -> Log.i(TAG, message) }
 
 // unsubscribe
 topic.dispose()

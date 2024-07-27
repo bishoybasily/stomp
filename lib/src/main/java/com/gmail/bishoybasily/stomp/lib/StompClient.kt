@@ -13,9 +13,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
 
-class StompClient(private val okHttpClient: OkHttpClient,
-                  private val reconnectAfter: Long) :
-        WebSocketListener() {
+class StompClient(
+        private val url: String,
+        private val okHttpClient: OkHttpClient,
+        private val reconnectAfter: Long
+) : WebSocketListener() {
 
     private val logger = Logger.getLogger(javaClass.name)
 
@@ -32,9 +34,10 @@ class StompClient(private val okHttpClient: OkHttpClient,
 
     private lateinit var emitter: ObservableEmitter<Event>
 
-    lateinit var url: String
+    private var customHeaders: Map<String, String>? = null
 
-    fun connect(): Observable<Event> {
+    fun connect(headers: Map<String, String>?): Observable<Event> {
+        customHeaders = headers
         return Observable
                 .create<Event> {
                     emitter = it
@@ -169,6 +172,9 @@ class StompClient(private val okHttpClient: OkHttpClient,
     override fun onOpen(socket: WebSocket, response: Response) {
         val headers = HashMap<String, String>()
         headers[Headers.VERSION] = SUPPORTED_VERSIONS
+        customHeaders?.let { cHeaders ->
+            headers.putAll(cHeaders)
+        }
         webSocket.send(compileMessage(Message(Commands.CONNECT, headers)))
         logger.log(Level.INFO, "onOpen")
     }
@@ -215,6 +221,5 @@ class StompClient(private val okHttpClient: OkHttpClient,
         }
         logger.log(Level.INFO, "onMessage payload: ${message.payload}, heaaders:${message.headers}, command: ${message.command}")
     }
-
 
 }
